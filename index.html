@@ -5,11 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ITBI Calculator</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
-        label, select, input, button { display: block; margin-bottom: 10px; }
-        input, select { width: 100%; padding: 5px; }
-        button { background-color: #4CAF50; color: white; padding: 10px; border: none; cursor: pointer; }
-        #result { font-weight: bold; margin-top: 20px; }
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        label, select, input, button {
+            display: block;
+            margin-bottom: 10px;
+        }
+        input, select {
+            width: 100%;
+            padding: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+        }
+        #result {
+            font-weight: bold;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -26,13 +46,11 @@
     <input type="number" id="valorImovel" min="0" step="0.01">
     <label for="valorFinanciado">Valor Financiado (R$):</label>
     <input type="number" id="valorFinanciado" min="0" step="0.01">
-    <button id="calculateButton">Calculate ITBI</button>
+    <button onclick="calculateITBI()">Calculate ITBI</button>
     <div id="result"></div>
-    <div id="debug"></div>
 
     <script>
-    (function() {
-        var cityParams = {
+        const cityParams = {
             portoAlegre: { percentual: 3, percentualFinanciamento: 0.5, UFM: 5.5089, limiteUFM: 68000, limiteFinanciamento: 1500000 },
             caxiasDoSul: { percentual: 2, percentualFinanciamento: 0.5, UFM: 0, limiteUFM: null, limiteFinanciamento: null },
             canoas: { percentual: 3, percentualFinanciamento: 0.5, UFM: 0, limiteUFM: null, limiteFinanciamento: null },
@@ -40,34 +58,60 @@
             pelotas: { percentual: 2, percentualFinanciamento: 0.5, UFM: 0, limiteUFM: null, limiteFinanciamento: null }
         };
 
-        function log(message) {
-            var debugElement = document.getElementById('debug');
-            debugElement.innerHTML += message + '<br>';
-        }
-
         function calculateITBI() {
-            log('calculateITBI function called');
-            var city = document.getElementById('city').value;
-            var valorImovel = parseFloat(document.getElementById('valorImovel').value);
-            var valorFinanciado = parseFloat(document.getElementById('valorFinanciado').value) || 0;
-            var params = cityParams[city];
-
-            log('Values: ' + JSON.stringify({ city: city, valorImovel: valorImovel, valorFinanciado: valorFinanciado }));
+            const city = document.getElementById('city').value;
+            const valorImovel = parseFloat(document.getElementById('valorImovel').value);
+            const valorFinanciado = parseFloat(document.getElementById('valorFinanciado').value) || 0;
+            const params = cityParams[city];
 
             if (isNaN(valorImovel)) {
-                log('Valor Imóvel is not a number');
                 document.getElementById('result').textContent = 'Campo Valor Imóvel não pode ser vazio.';
                 return;
             }
 
-            var itbi = valorImovel * (params.percentual / 100);
-            log('Calculated ITBI: ' + itbi);
-            document.getElementById('result').textContent = 'ITBI: R$ ' + itbi.toFixed(2);
+            const itbi = calculateITBIValue(valorImovel, valorFinanciado, params);
+            document.getElementById('result').textContent = `ITBI: R$ ${itbi.toFixed(2)}`;
         }
 
-        document.getElementById('calculateButton').onclick = calculateITBI;
-        log('Script loaded');
-    })();
+        function calculateITBIValue(valorImovel, valorFinanciado, cityParams) {
+            const { percentual, percentualFinanciamento, UFM, limiteUFM, limiteFinanciamento } = cityParams;
+
+            if (limiteFinanciamento === null || limiteUFM === null) {
+                return calculateWithoutLimits(valorImovel, valorFinanciado, percentual, percentualFinanciamento);
+            }
+
+            const limiteValorFinanciado = limiteUFM * UFM;
+
+            if (valorImovel >= limiteFinanciamento) {
+                return calculateAboveLimit(valorImovel, percentual);
+            }
+
+            return calculateWithLimits(valorImovel, valorFinanciado, percentual, percentualFinanciamento, limiteValorFinanciado);
+        }
+
+        function calculateWithoutLimits(valorImovel, valorFinanciado, percentual, percentualFinanciamento) {
+            const valorEntrada = valorImovel - valorFinanciado;
+            return (valorEntrada * percentual / 100) + (valorFinanciado * percentualFinanciamento / 100);
+        }
+
+        function calculateAboveLimit(valorImovel, percentual) {
+            return valorImovel * (percentual / 100);
+        }
+
+        function calculateWithLimits(valorImovel, valorFinanciado, percentual, percentualFinanciamento, limiteValorFinanciado) {
+            const valorFinanciadoReduzido = Math.min(valorFinanciado, limiteValorFinanciado);
+            const valorNaoFinanciado = valorImovel - valorFinanciado;
+
+            let valorPagar = (valorFinanciadoReduzido * (percentualFinanciamento / 100)) +
+                            (valorNaoFinanciado * (percentual / 100));
+
+            if (valorFinanciado > limiteValorFinanciado) {
+                const excedente = valorFinanciado - limiteValorFinanciado;
+                valorPagar += excedente * (percentual / 100);
+            }
+
+            return Number(valorPagar.toFixed(2));
+        }
     </script>
 </body>
 </html>
