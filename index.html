@@ -32,14 +32,6 @@
 
     <script>
     (function() {
-        var cityParams = {
-            portoAlegre: { percentual: 3, percentualFinanciamento: 0.5, UFM: 5.5089, limiteUFM: 68000, limiteFinanciamento: 1500000 },
-            caxiasDoSul: { percentual: 2, percentualFinanciamento: 0.5, UFM: 0, limiteUFM: null, limiteFinanciamento: null },
-            canoas: { percentual: 3, percentualFinanciamento: 0.5, UFM: 0, limiteUFM: null, limiteFinanciamento: null },
-            santaMaria: { percentual: 2.15, percentualFinanciamento: 1, UFM: 0, limiteUFM: null, limiteFinanciamento: null },
-            pelotas: { percentual: 2, percentualFinanciamento: 0.5, UFM: 0, limiteUFM: null, limiteFinanciamento: null }
-        };
-
         async function calculateITBI() {
             var city = document.getElementById('city').value;
             var valorImovel = parseFloat(document.getElementById('valorImovel').value);
